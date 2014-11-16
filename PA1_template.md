@@ -47,8 +47,16 @@ loaded via a namespace (and not attached):
 # Setting the locale and loading packages
 
 We change time locale to have english names of days, for better understanding and load knitr and lattice packages.
-```{r}
+
+```r
 Sys.setlocale("LC_TIME", "English")
+```
+
+```
+## [1] "English_United States.1252"
+```
+
+```r
 library(knitr)
 library(lattice)
 ```
@@ -57,7 +65,8 @@ library(lattice)
 
 Since the dataset was already included in repository, we only read it, without downloading it from the web:
 
-```{r}
+
+```r
 unzip("./activity.zip", exdir = getwd() )
 activityData<-read.csv("./activity.csv", header = TRUE, sep = ",")
 activityData$date<-as.Date(activityData$date)
@@ -65,11 +74,11 @@ activityData$date<-as.Date(activityData$date)
 
 We agregate the data, to see activity patterns later.
 
-```{r}
+
+```r
 activityAgreggate<-aggregate(steps ~ interval, data = activityData, FUN = "mean", na.rm=TRUE) 
 
 daysAggregate<-aggregate(steps~date, data = activityData, FUN = "sum", na.rm=TRUE)
-
 ```
 
 
@@ -78,14 +87,19 @@ daysAggregate<-aggregate(steps~date, data = activityData, FUN = "sum", na.rm=TRU
 
 ## What is mean total number of steps taken per day?
 
-```{r histogram}
-histogram(daysAggregate$steps, xlab = "Numbers of steps per day", ylab = "Frequency")
 
+```r
+histogram(daysAggregate$steps, xlab = "Numbers of steps per day", ylab = "Frequency")
+```
+
+![plot of chunk histogram](figure/histogram.png) 
+
+```r
 mean<-mean(daysAggregate$steps)
 median<-median(daysAggregate$steps)
 ```
 
-As we can see from the histogram, on most days number of steps per day is between the 10000 and 15000, with the mean of number of steps equals to `r mean`, and median to `r median`.
+As we can see from the histogram, on most days number of steps per day is between the 10000 and 15000, with the mean of number of steps equals to 1.0766 &times; 10<sup>4</sup>, and median to 10765.
 
 *Note that so far we simply omitted missing values from the data set.*
 
@@ -93,24 +107,30 @@ As we can see from the histogram, on most days number of steps per day is betwee
 
 It is easy to identify where generally (on average) to find the activity peak:
 
-```{r plot, fig.height=4}
+
+```r
 xyplot(steps ~ interval, data = activityAgreggate, type = 'l', xlab = "Intervals", ylab ="Averaged activity (through the whole period)")
-
-peakInterval<-activityAgreggate$interval[which.max(activityAgreggate$steps)]
-
 ```
 
-The interval which has maximum avaraged number of steps is `r peakInterval`.
+![plot of chunk plot](figure/plot.png) 
+
+```r
+peakInterval<-activityAgreggate$interval[which.max(activityAgreggate$steps)]
+```
+
+The interval which has maximum avaraged number of steps is 835.
 
 ## Imputing missing values
 
-```{r}
+
+```r
 sum<-sum(is.na(activityData$steps))
 ```
 
-There are `r sum` missing values in the data set. We will replace them with respective values of averaged number of steps in these intervals, in new data set, equal with activityData set.
+There are 2304 missing values in the data set. We will replace them with respective values of averaged number of steps in these intervals, in new data set, equal with activityData set.
 
-```{r}
+
+```r
 completeActivityData<-activityData
 
 for (i in 1:nrow(completeActivityData)) {
@@ -125,30 +145,37 @@ completeActivityData$steps[i]<-round(meanOfStepsPerInterval[[index]])
 
 How does the histogram of total number of steps look like now ?
 
-```{r}
+
+```r
 daysCompleteAggregate<-aggregate(steps~date, data = completeActivityData, FUN = "sum")
 histogram(daysCompleteAggregate$steps, xlab = "Numbers of steps per day", ylab = "Frequency")
+```
 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
+
+```r
 completeMean<-mean(daysCompleteAggregate$steps)
 completeMedian<-median(daysCompleteAggregate$steps)
 ```
 
 Comparing to previous one, there appear to be more days in which total number of steps is arround 10000, while the frequencies of other sums decreased.
 
-Comparison of old mean - `r mean` and new mean - `r completeMean` shows no difference, while old median - `r median` appears to be slightly bigger than new one - `r completeMedian`. 
+Comparison of old mean - 1.0766 &times; 10<sup>4</sup> and new mean - 1.0766 &times; 10<sup>4</sup> shows no difference, while old median - 10765 appears to be slightly bigger than new one - 1.0762 &times; 10<sup>4</sup>. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 At first we create new character variable in the data set, which describes 
 what day was the measure measured.
 
-```{r}
+
+```r
 completeActivityData$dayType<-weekdays(completeActivityData$date)
 ```
 
 Next we classify if the day was the weekday or weekend day and transform dayType variable to factor type.
 
-```{r}
+
+```r
 for (i in 1:nrow(completeActivityData)) {
 
 if (completeActivityData$dayType[i] %in% c( "Saturday","Sunday")){
@@ -162,16 +189,19 @@ completeActivityData$dayType[i]<-"weekday"
 
 }
 completeActivityData$dayType = factor(completeActivityData$dayType, levels = c("weekday","weekend"))
-``` 
+```
 
 We repeat aggregation step, this time taking into account also dayType and plot the panel.
 
-```{r}
+
+```r
 completeAgreggate<-aggregate(steps ~ interval + dayType, data = completeActivityData, FUN = "mean") 
 
 xyplot(steps ~ interval | dayType, data = completeAgreggate, 
        type = 'l', layout = c(1,2))
 ```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9.png) 
 
 
 
